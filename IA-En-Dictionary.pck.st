@@ -1,6 +1,6 @@
-'From Cuis 5.0 of 7 November 2016 [latest update: #3293] on 3 May 2018 at 5:27:30 pm'!
+'From Cuis 5.0 of 7 November 2016 [latest update: #3293] on 4 May 2018 at 10:44:43 am'!
 'Description Enter a word in English and find... '!
-!provides: 'IA-En-Dictionary' 1 8!
+!provides: 'IA-En-Dictionary' 1 10!
 !requires: 'Morphic-Widgets-Extras' 1 15 nil!
 SystemOrganization addCategory: #'IA-En-Dictionary'!
 
@@ -42,6 +42,27 @@ defaultSeparation
 	
 	^ 5 "pixels"! !
 
+!IEDictWindow methodsFor: 'geometry' stamp: 'ebi 5/4/2018 10:38:55'!
+fontPreferenceChanged
+
+  super fontPreferenceChanged.
+  self promptMorph 
+		layoutSpec: (LayoutSpec 
+						proportionalWidth: 0.3; 
+						fixedWidth: 
+							(self promptMorph measureContents x)).
+  self layoutMorph submorphs last "text entry layout"
+	layoutSpec: (LayoutSpec
+					proportionalWidth: 1 
+					fixedHeight: self defaultSeparation * 2 + self textSizeUnit).
+					
+  self morphExtent: (self morphExtent max: self initialExtent).! !
+
+!IEDictWindow methodsFor: 'geometry' stamp: 'ebi 5/4/2018 10:34:12'!
+initialExtent
+
+	^ (30 @ 16) * self textSizeUnit ! !
+
 !IEDictWindow methodsFor: 'geometry' stamp: 'ebi 5/3/2018 13:36:33'!
 textSizeUnit
 	"Answer the scaling factor for sizing; note  method #fontPreferenceChanged"
@@ -65,7 +86,18 @@ searchString
 
 	^ entryTextMorph contents asString ! !
 
-!IEDictWindow methodsFor: 'GUI building' stamp: 'ebi 5/3/2018 17:22:21'!
+!IEDictWindow methodsFor: 'color' stamp: 'ebi 5/3/2018 18:00:37'!
+backgroundColor
+
+	^  Theme current transcript muchLighter! !
+
+!IEDictWindow methodsFor: 'color' stamp: 'ebi 5/3/2018 18:14:12'!
+windowColor
+	"Use current theme"
+	
+	^Theme current transcript ! !
+
+!IEDictWindow methodsFor: 'GUI building' stamp: 'ebi 5/3/2018 18:01:22'!
 buildMorphicWindow
 	"build and layout the window and answer it"
 	self layoutMorph
@@ -77,7 +109,7 @@ buildMorphicWindow
 		addMorph: self makeResultsArea.
 	model when: #newSearchResult send: #searchResultsChanged to: self.
 	model interlinguaContainsClick ."set initial text"
-	
+	self color: self backgroundColor.
 	^self! !
 
 !IEDictWindow methodsFor: 'GUI building' stamp: 'ebi 5/3/2018 13:29:24'!
@@ -201,13 +233,44 @@ searchResultsChanged
 	
 	resultMorph updateList ! !
 
-!IEDictWindow class methodsFor: 'instance creation' stamp: 'ebi 5/3/2018 11:46:38'!
+!IEDictWindow class methodsFor: 'instance creation' stamp: 'ebi 5/4/2018 10:27:00'!
 open
 "
 	IEDictWindow open
 	
 "
-	^ self open: (IEDict new) label: 'Interlingua <--> Englisch'! !
+| newSelf |
+	newSelf := self open: (IEDict new) label: 'Interlingua <--> English'.
+	"Override default color resets in SystemWindow>>openInWorld"
+	newSelf color: newSelf backgroundColor.
+	newSelf layoutMorph submorphs last "the text entry layout morph"
+		color: (Theme current textHighlight lighter).
+	^ newSelf! !
+
+!IEDictWindow class methodsFor: 'world-menu' stamp: 'ebi 5/3/2018 17:33:31'!
+worldMenuForOpenGroup
+	"Answer the information required to add me to the World menu-->Open.. submenu"
+
+^ Dictionary new
+		
+			at: #itemGroup
+			put: 10;
+		
+			at: #itemOrder
+			put: 20;
+		
+			at: #label
+			put: 'IA<-->EN';
+		
+			at: #object
+			put: self;
+		
+			at: #selector
+			put: #open;
+		
+			at: #balloonText
+			put: 'Interlingua<-->English Lookup';
+		yourself.! !
 
 !IEDictWindow class methodsFor: 'geometry' stamp: 'ebi 5/3/2018 13:33:51'!
 defaultSeparation
@@ -312,6 +375,47 @@ initialize
 			curIndex := 1 + curIndex.
 		]
 	] ! !
+
+!IEDict class methodsFor: 'documentation' stamp: 'ebi 5/4/2018 10:41:56'!
+whyMe
+	"Answer what you always wanted to know..."
+
+	^'Interlingua is an auxiliary language made from common elements of 
+the romance languages and English. The language has been in use since the 1950''s 
+and is very readable.
+
+You can find out much more at http://www.interlingua.com
+	
+The dictionary presented here is based on a 30,000 entry dictionary available 
+from Paul Denisowski (paul@denisowski.org)  at  
+	http://www.denisowski.org/Interlingua/Interlingua.html
+
+Interlingua Sample:
+	
+Pro personas qui es familiar con le vocabulario panoccidental Interlingua es 
+comprensibile a prime vista. Per un texto in Interlingua on pote attinger un 
+grande publico multinational cultivate. Pro altere personas Interlingua 
+offere un utile introduction al tresor de vocabulos scientific, technic e 
+cultural. Illo anque facilita le lectura de linguas romanic. Interlingua pote 
+esser un profitabile factor supplementari in studios linguistic. 
+
+Le internationalitate del vocabulario e le simplicitate del grammatica 
+possibilisa al lector o studiante tosto occupar le position de un active 
+usator de Interlingua.
+...
+Lingua natural
+e musical
+de parolas international
+e un grammatica phenomenal!!
+
+Comprehensibile facilemente
+in le mundo per tote le gente:
+apprender lo es un acto intelligente!!
+
+Le medio de comprehension
+pro le solution del confusion
+in le global communication!!
+'! !
 
 !IEDict class methodsFor: 'lookup' stamp: 'ebi 5/3/2018 11:13:52'!
 englishContains: aString
